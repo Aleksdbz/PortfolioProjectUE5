@@ -12,6 +12,8 @@ class USpringArmComponent;
 class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
+class ABow;
+class AArrow;
 struct FInputActionValue;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
@@ -59,6 +61,16 @@ public:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category= InputAnimation, meta =(AllowPrivateAccess = "true"))
 	bool isFiring;
 	
+    UPROPERTY(EditAnywhere)
+	ABow* Bow;
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABow> BowCLass;
+
+	UPROPERTY(EditAnywhere)
+	AArrow* Arrow;
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<AArrow> ArrowClass;
+	
 	
 
 protected:
@@ -82,10 +94,14 @@ protected:
 	// To add mapping context
 	virtual void BeginPlay();
 
+	virtual void Tick(float DeltaSeconds) override;
+
 public:
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+private:
+	bool HasArrowSpawned;
 };
 

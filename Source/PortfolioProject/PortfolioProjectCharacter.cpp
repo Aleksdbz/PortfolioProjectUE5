@@ -1,4 +1,3 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "PortfolioProjectCharacter.h"
 #include "Engine/LocalPlayer.h"
@@ -8,8 +7,12 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/Controller.h"
 #include "EnhancedInputComponent.h"
+#include "Arrow.h"
+#include "Bow.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
+#include "Components/PoseableMeshComponent.h"
+#include "GameFramework/ProjectileMovementComponent.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -67,9 +70,25 @@ void APortfolioProjectCharacter::BeginPlay()
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		}
 	}
-
+    //Attach Bow to PlayerSocket
+	Bow = GetWorld()->SpawnActor<ABow>(BowCLass);
+	Bow->AttachToComponent(GetMesh(),FAttachmentTransformRules::KeepRelativeTransform,TEXT("hand_lSocket"));
+	Bow->SetOwner(this);
+	
+	HasArrowSpawned = false;
 	
 }
+
+void APortfolioProjectCharacter::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+	
+		
+		//FTransform SocketTransform = GetMesh()->GetSocketTransform(TEXT("Hand_R"));
+		//Bow->PoseableMesh->SetBoneTransformByName(TEXT("stringSocket"),SocketTransform ,EBoneSpaces::WorldSpace);
+	
+}
+
 
 //////////////////////////////////////////////////////////////////////////
 // Input
@@ -96,10 +115,6 @@ void APortfolioProjectCharacter::SetupPlayerInputComponent(UInputComponent* Play
 		//Fire Bow
 		EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Started,this, &APortfolioProjectCharacter::StartFire);
 		EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Completed,this, &APortfolioProjectCharacter::StopFire);
-
-
-		
-		
 
 		
 	}
@@ -147,14 +162,24 @@ void APortfolioProjectCharacter::Look(const FInputActionValue& Value)
 void APortfolioProjectCharacter::StartAim(const FInputActionValue& Value)
 {
 	isAiming = Value.Get<bool>();
+	if(!HasArrowSpawned)	
+	{
+		//Attach Arrow to Socket
+		Arrow = GetWorld()->SpawnActor<AArrow>(ArrowClass);
+		Arrow->AttachToComponent(GetMesh(),FAttachmentTransformRules::KeepRelativeTransform,TEXT("hand_rSocket"));
+		Arrow->SetOwner(this);
+		
+	}
 }
 void APortfolioProjectCharacter::StopAim(const FInputActionValue& Value)
 {
 	isAiming = Value.Get<bool>();
+		Arrow->Destroy();
 }
 void APortfolioProjectCharacter::StartFire(const FInputActionValue& Value)
 {
 	isFiring = isAiming = Value.Get<bool>();
+	
 }
 void APortfolioProjectCharacter::StopFire(const FInputActionValue& Value)
 {

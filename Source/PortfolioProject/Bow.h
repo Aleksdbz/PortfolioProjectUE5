@@ -14,6 +14,16 @@ class PORTFOLIOPROJECT_API ABow : public AActor
 public:	
 	// Sets default values for this actor's properties
 	ABow();
+	
+     UPROPERTY(EditAnywhere,BlueprintReadOnly)
+	 USkeletalMeshComponent* SkeletalMesh;
+	//UPROPERTY(EditAnywhere,BlueprintReadOnly)
+	//class UPoseableMeshComponent* PoseableMesh;
+	UPROPERTY(EditAnywhere,BlueprintReadOnly)
+	USceneComponent* Root;
+
+	
+	
 
 
 protected:

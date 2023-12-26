@@ -2,6 +2,7 @@
 
 
 #include "Bow.h"
+#include "Components/PoseableMeshComponent.h"
 
 // Sets default values
 ABow::ABow()
@@ -9,6 +10,15 @@ ABow::ABow()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 
+	Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+	SetRootComponent(Root);
+
+	SkeletalMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Mesh"));
+	SkeletalMesh->SetupAttachment(Root);
+
+	//PoseableMesh = CreateDefaultSubobject<UPoseableMeshComponent>(TEXT("PoseableMesh"));
+	
+	
 }
 
 // Called when the game starts or when spawned
