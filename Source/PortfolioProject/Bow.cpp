@@ -1,8 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "Bow.h"
-#include "Components/PoseableMeshComponent.h"
 
 // Sets default values
 ABow::ABow()
@@ -15,9 +13,6 @@ ABow::ABow()
 
 	SkeletalMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Mesh"));
 	SkeletalMesh->SetupAttachment(Root);
-
-	//PoseableMesh = CreateDefaultSubobject<UPoseableMeshComponent>(TEXT("PoseableMesh"));
-	
 	
 }
 
@@ -25,7 +20,6 @@ ABow::ABow()
 void ABow::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 // Called every frame
@@ -34,4 +28,5 @@ void ABow::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 }
+
 

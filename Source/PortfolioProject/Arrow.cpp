@@ -1,7 +1,6 @@
 
 #include "Arrow.h"
 
-#include "PortfolioProjectCharacter.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 
@@ -17,17 +16,14 @@ AArrow::AArrow()
 	CapsuleColider->SetupAttachment(StaticMesh);
 	ProjectileMovement->InitialSpeed = 1400.0f;
 	ProjectileMovement->MaxSpeed = 1600.0f;
-
-
-
-
+	InitialLifeSpan = 5.0f;
+	ProjectileMovement->bAutoActivate = false;
 }
 
 // Called when the game starts or when spawned
 void AArrow::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 // Called every frame
