@@ -170,6 +170,7 @@ void APortfolioProjectCharacter::StartAim(const FInputActionValue& Value)
 void APortfolioProjectCharacter::StopAim(const FInputActionValue& Value)
 {
 	isAiming = Value.Get<bool>();
+	Arrow->Destroy();
 		
 }
 void APortfolioProjectCharacter::StartFire(const FInputActionValue& Value)
