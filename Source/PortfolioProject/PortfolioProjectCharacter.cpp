@@ -11,7 +11,6 @@
 #include "Bow.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
-#include "Components/PoseableMeshComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);

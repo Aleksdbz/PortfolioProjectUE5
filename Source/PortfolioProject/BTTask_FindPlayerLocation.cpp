@@ -19,9 +19,10 @@ EBTNodeResult::Type UBTTask_FindPlayerLocation::ExecuteTask(UBehaviorTreeCompone
 	//Get Player Character
 	if(auto* const Player = UGameplayStatics::GetPlayerCharacter(GetWorld(),0))
 	{
+		
 		//Get Player location to use as origin
 		auto const PlayerLocation = Player->GetActorLocation();
-
+		
 		if(SearchRandom)
 		{
 			FNavLocation Loc;
@@ -31,6 +32,7 @@ EBTNodeResult::Type UBTTask_FindPlayerLocation::ExecuteTask(UBehaviorTreeCompone
 				// try to get a random location near the player
 				if(NavSys->GetRandomPointInNavigableRadius(PlayerLocation,SearchRadius,Loc))
 				{
+					
 				   OwnerComp.GetBlackboardComponent()->SetValueAsVector(GetSelectedBlackboardKey(),Loc.Location);
 					FinishLatentTask(OwnerComp,EBTNodeResult::Succeeded);
 					return EBTNodeResult::Succeeded;
