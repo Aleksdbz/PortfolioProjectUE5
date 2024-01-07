@@ -6,8 +6,6 @@
 #include "AIController.h"
 #include "Perception/AIPerceptionTypes.h"
 #include "NPC_AIController.generated.h"
-
-
 /**
  * 
  */

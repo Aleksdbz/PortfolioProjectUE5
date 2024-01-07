@@ -2,6 +2,7 @@
 
 
 #include "AICharacter.h"
+#include "Sword.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Perception/AISense_Sight.h"
 
@@ -11,6 +12,7 @@ AAICharacter::AAICharacter()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 	SetUpStimulusSource();
+	
 
 }
 
@@ -18,6 +20,10 @@ AAICharacter::AAICharacter()
 void AAICharacter::BeginPlay()
 {
 	Super::BeginPlay();
+		Sword = GetWorld()->SpawnActor<ASword>(SwordClass);
+		Sword->AttachToComponent(GetMesh(),FAttachmentTransformRules::KeepRelativeTransform,TEXT("hand_lSocket"));
+		Sword->SetOwner(this);
+	
 	
 }
 
@@ -49,4 +55,18 @@ UBehaviorTree* AAICharacter::GetBehaviorTree()
 {
 	return Tree;
 }
+UAnimMontage* AAICharacter::GetMontage() const
+{
+	return Montage;
+}
+
+int AAICharacter::MeleeAttack_Implementation()
+{
+	if(Montage)
+	{
+		PlayAnimMontage(Montage);
+	}
+	return 0;
+}
+
 

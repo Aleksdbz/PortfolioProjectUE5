@@ -83,8 +83,6 @@ void APortfolioProjectCharacter::Tick(float DeltaSeconds)
 	Super::Tick(DeltaSeconds);
 	
 }
-
-
 //////////////////////////////////////////////////////////////////////////
 // Input
 
@@ -169,17 +167,18 @@ void APortfolioProjectCharacter::StartAim(const FInputActionValue& Value)
 void APortfolioProjectCharacter::StopAim(const FInputActionValue& Value)
 {
 	isAiming = Value.Get<bool>();
-	Arrow->Destroy();
-		
+	
 }
 void APortfolioProjectCharacter::StartFire(const FInputActionValue& Value)
 {
 	isFiring  = Value.Get<bool>();
-	FVector const ArrowDirection = GetActorForwardVector();
-	Arrow->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-	Arrow->ProjectileMovement->Activate();
-	Arrow->ProjectileMovement->Velocity = ArrowDirection * Arrow->ProjectileMovement->InitialSpeed;
-
+	if(isAiming)
+	{
+		FVector const ArrowDirection = GetActorForwardVector();
+		Arrow->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+		Arrow->ProjectileMovement->Activate();
+		Arrow->ProjectileMovement->Velocity = ArrowDirection * Arrow->ProjectileMovement->InitialSpeed;
+	}
 	
 }
 void APortfolioProjectCharacter::StopFire(const FInputActionValue& Value)

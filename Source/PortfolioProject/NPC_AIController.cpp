@@ -34,13 +34,11 @@ void ANPC_AIController::SetUpPerceptionSystem()
 
 	if(SightConfig)
 	{
-		
-		UE_LOG(LogTemp, Warning, TEXT("Sight Config found."));
 
 		SetPerceptionComponent(*CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("Perception Componenet")));
 		SightConfig->SightRadius = 500.0f;
 		SightConfig->LoseSightRadius = SightConfig->SightRadius + 25.0f;
-		SightConfig->PeripheralVisionAngleDegrees = 90.0f;
+		SightConfig->PeripheralVisionAngleDegrees = 180.0f;
 		SightConfig->SetMaxAge(5.0f);
 		SightConfig->AutoSuccessRangeFromLastSeenLocation = 520.0f;
 		SightConfig->DetectionByAffiliation.bDetectEnemies = true;
@@ -51,31 +49,18 @@ void ANPC_AIController::SetUpPerceptionSystem()
 		GetPerceptionComponent()->OnTargetPerceptionUpdated.AddDynamic(this,&ANPC_AIController::OnTargetDetected);
 		GetPerceptionComponent()->ConfigureSense(*SightConfig);
 
-		UE_LOG(LogTemp, Warning, TEXT("Perception system set up."));
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Could not find Sight Config."));
-	}
+		
 	}
 
-	
-	
-
+}
 
 void ANPC_AIController::OnTargetDetected(AActor* Actor, FAIStimulus const Stimulus)
 {
 
 	if(auto* const ch = Cast<AAICharacter>(Actor))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Target detected: %s"), *Actor->GetName());
-
 		GetBlackboardComponent()->SetValueAsBool(TEXT("CanSeePlayer"),Stimulus.WasSuccessfullySensed());
-		UE_LOG(LogTemp, Warning, TEXT("CanSeePlayer: %s"), Stimulus.WasSuccessfullySensed() ? TEXT("True") : TEXT("False"));
 
 	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Could not cast actor to AAICharacter."));
-	}
+	
 }

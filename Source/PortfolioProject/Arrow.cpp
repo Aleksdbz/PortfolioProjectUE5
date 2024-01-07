@@ -14,10 +14,13 @@ AArrow::AArrow()
 	CapsuleColider = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Colider"));
 	SetRootComponent(StaticMesh);
 	CapsuleColider->SetupAttachment(StaticMesh);
-	ProjectileMovement->InitialSpeed = 1400.0f;
-	ProjectileMovement->MaxSpeed = 1600.0f;
+	ProjectileMovement->InitialSpeed = 6500.0f;
+	ProjectileMovement->MaxSpeed = 6500.0f;
 	InitialLifeSpan = 5.0f;
+	ProjectileMovement->ProjectileGravityScale = 0.5f;
+	SetActorRotation(FRotator(FMath::RandRange(-10,10),FMath::RandRange(-10,10),FMath::RandRange(-10,10)));
 	ProjectileMovement->bAutoActivate = false;
+	
 }
 
 // Called when the game starts or when spawned
