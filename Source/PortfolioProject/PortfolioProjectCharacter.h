@@ -6,8 +6,10 @@
 #include "InputActionValue.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
+#include "UE5Coro.h"
 #include "PortfolioProjectCharacter.generated.h"
 
+class ASword;
 class USpringArmComponent;
 class UCameraComponent;
 class UInputMappingContext;
@@ -48,29 +50,36 @@ class APortfolioProjectCharacter : public ACharacter
 	UInputAction* LookAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* AimAction;
+	UInputAction* BlockAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* FireAction;
+	UInputAction* LightAttack;
+
+	
+
 
 public:
 	APortfolioProjectCharacter();
-
-	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category= InputAnimation, meta =(AllowPrivateAccess = "true"))
-	bool isAiming;
-	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category= InputAnimation, meta =(AllowPrivateAccess = "true"))
-	bool isFiring;
 	
-    UPROPERTY(EditAnywhere)
-	ABow* Bow;
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<ABow> BowCLass;
-
-	UPROPERTY(EditAnywhere)
-	AArrow* Arrow;
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<AArrow> ArrowClass;
+	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category= InputAnimation, meta =(AllowPrivateAccess = "true"))
+	bool IsSlashing;
 	
+	UPROPERTY(EditAnywhere)
+	ASword* Sword;
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ASword> SwordClass;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadWrite)
+	class UHealthComponent* HealthComponent;
+	UFUNCTION()
+	void OnHealthChange(UHealthComponent* HealthCom,float Health,float DamageAmount,
+		const class UDamageType* DamageType,class AController* InstigatedBy, AActor* DamageCauser);
+	
+	UFUNCTION()
+	void DamagePlayer(); //it will be called to dmg player
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,Category="Weapon")
+	TSubclassOf<UDamageType> DamageType;
+	
+
 	
 
 protected:
@@ -82,26 +91,44 @@ protected:
 	void Look(const FInputActionValue& Value);
 	
 
-	void StartAim(const FInputActionValue& Value);		
-	void StopAim(const FInputActionValue& Value);
-	void StartFire(const FInputActionValue& Value);
-	void StopFire(const FInputActionValue& Value);
+	void StartBlock(const FInputActionValue& Value);		
+	void StopBlock(const FInputActionValue& Value);
+	void StartLightAttack(const FInputActionValue& Value);
 
-protected:
+	
 	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	
 	// To add mapping context
-	virtual void BeginPlay();
+	virtual void BeginPlay() override;
 
 	virtual void Tick(float DeltaSeconds) override;
+	
 
 public:
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+
+
 private:
-	bool HasArrowSpawned;
+	void EquipSword();
+	UE5Coro::TCoroutine<> StartAttack(UAnimMontage* Montage);
+	int ComboCount ;
+	bool isAttacking;
+
+	UAnimInstance* GetAnimInstance() const;
+	
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "PlayerCombatAnimation", meta =(AllowPrivateAccess = "true"))
+	UAnimMontage* SwordAttack;
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "PlayerCombatAnimation", meta =(AllowPrivateAccess = "true"))
+	UAnimMontage* SwordAttack2;
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "PlayerCombatAnimation", meta =(AllowPrivateAccess = "true"))
+    UAnimMontage* SwordAttack3;
+	
+	
+
+	
 };
 

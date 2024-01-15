@@ -1,32 +1,31 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "Bow.h"
+#include "Components/CapsuleComponent.h"
+#include "Sword.h"
 
 // Sets default values
-ABow::ABow()
+ASword::ASword()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
+	SkeletalMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("StaticMesh"));
+	CapsuleColider = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Colider"));
+	SetRootComponent(SkeletalMesh);
+	CapsuleColider->SetupAttachment(SkeletalMesh);
 
-	Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
-	SetRootComponent(Root);
-
-	SkeletalMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Mesh"));
-	SkeletalMesh->SetupAttachment(Root);
-	
 }
 
 // Called when the game starts or when spawned
-void ABow::BeginPlay()
+void ASword::BeginPlay()
 {
 	Super::BeginPlay();
+	
 }
 
 // Called every frame
-void ABow::Tick(float DeltaTime)
+void ASword::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
 }
-
 

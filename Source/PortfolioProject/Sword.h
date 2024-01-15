@@ -4,23 +4,21 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Bow.generated.h"
+#include "Sword.generated.h"
 
 UCLASS()
-class PORTFOLIOPROJECT_API ABow : public AActor
+class PORTFOLIOPROJECT_API ASword : public AActor
 {
 	GENERATED_BODY()
 	
 public:	
 	// Sets default values for this actor's properties
-	ABow();
-	
+	ASword();
 	UPROPERTY(EditAnywhere,BlueprintReadOnly)
 	USkeletalMeshComponent* SkeletalMesh;
 	UPROPERTY(EditAnywhere,BlueprintReadOnly)
-	USceneComponent* Root;
-	
-	
+	class UCapsuleComponent* CapsuleColider;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -28,5 +26,7 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
 	
+
 };

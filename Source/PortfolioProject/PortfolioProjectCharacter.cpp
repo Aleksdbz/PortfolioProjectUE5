@@ -7,12 +7,14 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/Controller.h"
 #include "EnhancedInputComponent.h"
-#include "Arrow.h"
-#include "Bow.h"
+#include "Logging/LogMacros.h"
+#include "Animation/AnimInstance.h"
+#include "HealthComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Sword.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
-#include "Components/PoseableMeshComponent.h"
-#include "GameFramework/ProjectileMovementComponent.h"
+
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -55,6 +57,8 @@ APortfolioProjectCharacter::APortfolioProjectCharacter()
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
+
+	HealthComponent = CreateDefaultSubobject<UHealthComponent>(TEXT("HealthComponenet"));
 }
 
 void APortfolioProjectCharacter::BeginPlay()
@@ -70,23 +74,42 @@ void APortfolioProjectCharacter::BeginPlay()
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		}
 	}
-    //Attach Bow to PlayerSocket
-	Bow = GetWorld()->SpawnActor<ABow>(BowCLass);
-	Bow->AttachToComponent(GetMesh(),FAttachmentTransformRules::KeepRelativeTransform,TEXT("hand_lSocket"));
-	Bow->SetOwner(this);
-	
-	HasArrowSpawned = false;
+	HealthComponent->OnHealthChanged.AddDynamic(this,&APortfolioProjectCharacter::OnHealthChange);
+	EquipSword();
 	
 }
+
 
 void APortfolioProjectCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+
+}
+
+
+void APortfolioProjectCharacter::EquipSword()
+{
 	
-		
-		//FTransform SocketTransform = GetMesh()->GetSocketTransform(TEXT("Hand_R"));
-		//Bow->PoseableMesh->SetBoneTransformByName(TEXT("stringSocket"),SocketTransform ,EBoneSpaces::WorldSpace);
-	
+	Sword = GetWorld()->SpawnActor<ASword>(SwordClass);
+	Sword->AttachToComponent(GetMesh(),FAttachmentTransformRules::KeepRelativeTransform,TEXT("hand_rSocket"));
+	Sword->SetOwner(this);
+}
+
+UE5Coro::TCoroutine<> APortfolioProjectCharacter::StartAttack(UAnimMontage* Montage)
+{
+	isAttacking = true;
+
+	UAnimInstance* AnimInstance = GetAnimInstance();
+	AnimInstance->Montage_Play(Montage);
+	co_await UE5Coro::Anim::MontageEnded(AnimInstance,Montage);
+	isAttacking = false;
+	co_return;
+}
+
+
+UAnimInstance* APortfolioProjectCharacter::GetAnimInstance() const
+{
+	return GetMesh()->GetAnimInstance();
 }
 
 
@@ -108,20 +131,33 @@ void APortfolioProjectCharacter::SetupPlayerInputComponent(UInputComponent* Play
 		// Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &APortfolioProjectCharacter::Look);
 
-		//Aiming with Bow
-		EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Started,this, &APortfolioProjectCharacter::StartAim);
-		EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Completed,this, &APortfolioProjectCharacter::StopAim);
+		//Block
+		EnhancedInputComponent->BindAction(BlockAction, ETriggerEvent::Started,this, &APortfolioProjectCharacter::StartBlock);
+		EnhancedInputComponent->BindAction(BlockAction, ETriggerEvent::Completed,this, &APortfolioProjectCharacter::StopBlock);
 
-		//Fire Bow
-		EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Started,this, &APortfolioProjectCharacter::StartFire);
-		EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Completed,this, &APortfolioProjectCharacter::StopFire);
-
+		//Attack Action
+		EnhancedInputComponent->BindAction(LightAttack, ETriggerEvent::Started,this, &APortfolioProjectCharacter::StartLightAttack);
 		
 	}
 	else
 	{
 		UE_LOG(LogTemplateCharacter, Error, TEXT("'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
 	}
+}
+
+void APortfolioProjectCharacter::OnHealthChange(UHealthComponent* HealthCom, float Health, float DamageAmount,
+	const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser)
+{
+	if (Health <= 0.0f)
+	{
+		Destroy();
+	}
+	UE_LOG(LogTemp, Warning, TEXT("The Player's Current Health is: %f"), Health);
+}
+
+void APortfolioProjectCharacter::DamagePlayer()
+{
+	
 }
 
 void APortfolioProjectCharacter::Move(const FInputActionValue& Value)
@@ -159,31 +195,21 @@ void APortfolioProjectCharacter::Look(const FInputActionValue& Value)
 		AddControllerPitchInput(LookAxisVector.Y);
 	}
 }
-void APortfolioProjectCharacter::StartAim(const FInputActionValue& Value)
+void APortfolioProjectCharacter::StopBlock(const FInputActionValue& Value)
 {
-	isAiming = Value.Get<bool>();
-	if(!HasArrowSpawned)	
-	{
-		//Attach Arrow to Socket
-		Arrow = GetWorld()->SpawnActor<AArrow>(ArrowClass);
-		Arrow->AttachToComponent(GetMesh(),FAttachmentTransformRules::KeepRelativeTransform,TEXT("hand_rSocket"));
-		Arrow->SetOwner(this);
-		
-	}
-}
-void APortfolioProjectCharacter::StopAim(const FInputActionValue& Value)
-{
-	isAiming = Value.Get<bool>();
-		Arrow->Destroy();
-}
-void APortfolioProjectCharacter::StartFire(const FInputActionValue& Value)
-{
-	isFiring = isAiming = Value.Get<bool>();
 	
 }
-void APortfolioProjectCharacter::StopFire(const FInputActionValue& Value)
+void APortfolioProjectCharacter::StartBlock(const FInputActionValue& Value)
 {
-	isFiring = isAiming = Value.Get<bool>();
+	
+}
+
+void APortfolioProjectCharacter::StartLightAttack(const FInputActionValue& Value)
+{
+	if(isAttacking) return;
+	UAnimMontage* Montages[3] = {SwordAttack,SwordAttack2,SwordAttack3};
+	ComboCount = (ComboCount + 1) % 3;
+	StartAttack(Montages[ComboCount]);
 }
 
 
