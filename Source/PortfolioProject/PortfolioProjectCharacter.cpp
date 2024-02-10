@@ -1,6 +1,7 @@
 
 #include "PortfolioProjectCharacter.h"
 #include "Engine/LocalPlayer.h"
+#include "AbilitySystemComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -9,13 +10,18 @@
 #include "EnhancedInputComponent.h"
 #include "Logging/LogMacros.h"
 #include "Animation/AnimInstance.h"
-#include "HealthComponent.h"
-#include "Kismet/GameplayStatics.h"
+#include "MyGameplayAbility.h"
+#include "GameplayEffect.h"
 #include "Sword.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
+#include "GameplayTagContainer.h"
+#include "MyAttributeSet.h"
+#include "MyEnhancedInputComponent.h"
+#include "MyGameplayTags.h"
 
 
+struct FMyGameplayTags;
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
 //////////////////////////////////////////////////////////////////////////
@@ -58,25 +64,22 @@ APortfolioProjectCharacter::APortfolioProjectCharacter()
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
 
-	HealthComponent = CreateDefaultSubobject<UHealthComponent>(TEXT("HealthComponenet"));
+	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>("AbilitySystem");
+	AttributesSet = CreateDefaultSubobject<UMyAttributeSet>("AttributeSet");
+	
 }
 
 void APortfolioProjectCharacter::BeginPlay()
 {
 	// Call the base class  
 	Super::BeginPlay();
-
-	//Add Input Mapping Context
-	if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
-	{
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
-		{
-			Subsystem->AddMappingContext(DefaultMappingContext, 0);
-		}
-	}
-	HealthComponent->OnHealthChanged.AddDynamic(this,&APortfolioProjectCharacter::OnHealthChange);
-	EquipSword();
 	
+	InitializeAttributes();
+	EquipSword();
+	MappingContext();
+	GrandAbilities();
+	
+	AbilitySystemComponent->InitAbilityActorInfo(this,this);
 }
 
 
@@ -87,12 +90,59 @@ void APortfolioProjectCharacter::Tick(float DeltaSeconds)
 }
 
 
+void APortfolioProjectCharacter::InitializeAttributes()
+{
+	//APPLY GE or AbilitySystemComp to a Character
+	if(DefaultGameplayEffect)
+	{
+		FGameplayEffectContextHandle EffectContextHandle = AbilitySystemComponent->MakeEffectContext();
+		EffectContextHandle.AddSourceObject(this);
+
+		FGameplayEffectSpecHandle SpecHandle = AbilitySystemComponent->MakeOutgoingSpec
+		(DefaultGameplayEffect,1,EffectContextHandle);
+
+		if(SpecHandle.IsValid())
+		{
+			FActiveGameplayEffectHandle GEHandle = AbilitySystemComponent->
+			ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+		}
+		
+	}
+}
+
+void APortfolioProjectCharacter::GrandAbilities()
+{
+	for(TSubclassOf<UGameplayAbility> StartAbilities : GameplayAbility)
+	{
+		FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(StartAbilities, 1);
+		
+		if(const UMyGameplayAbility* Ability = Cast<UMyGameplayAbility>(AbilitySpec.Ability))
+		{
+			AbilitySpec.DynamicAbilityTags.AddTag(Ability->StartupInputTag);
+			AbilitySystemComponent->GiveAbility(AbilitySpec);
+		}
+	}
+}
+
+void APortfolioProjectCharacter::MappingContext()
+{
+	//Add Input Mapping Context
+	if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
+	{
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+		{
+			Subsystem->AddMappingContext(DefaultMappingContext, 0);
+		}
+	}
+}
+
 void APortfolioProjectCharacter::EquipSword()
 {
 	
 	Sword = GetWorld()->SpawnActor<ASword>(SwordClass);
 	Sword->AttachToComponent(GetMesh(),FAttachmentTransformRules::KeepRelativeTransform,TEXT("hand_rSocket"));
 	Sword->SetOwner(this);
+	Sword->StaticMeshComp->IgnoreActorWhenMoving(this,true);
 }
 
 UE5Coro::TCoroutine<> APortfolioProjectCharacter::StartAttack(UAnimMontage* Montage)
@@ -106,64 +156,16 @@ UE5Coro::TCoroutine<> APortfolioProjectCharacter::StartAttack(UAnimMontage* Mont
 	co_return;
 }
 
-
 UAnimInstance* APortfolioProjectCharacter::GetAnimInstance() const
 {
 	return GetMesh()->GetAnimInstance();
 }
 
 
-//////////////////////////////////////////////////////////////////////////
-// Input
-
-void APortfolioProjectCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	// Set up action bindings
-	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) {
-		
-		// Jumping
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
-
-		// Moving
-		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &APortfolioProjectCharacter::Move);
-
-		// Looking
-		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &APortfolioProjectCharacter::Look);
-
-		//Block
-		EnhancedInputComponent->BindAction(BlockAction, ETriggerEvent::Started,this, &APortfolioProjectCharacter::StartBlock);
-		EnhancedInputComponent->BindAction(BlockAction, ETriggerEvent::Completed,this, &APortfolioProjectCharacter::StopBlock);
-
-		//Attack Action
-		EnhancedInputComponent->BindAction(LightAttack, ETriggerEvent::Started,this, &APortfolioProjectCharacter::StartLightAttack);
-		
-	}
-	else
-	{
-		UE_LOG(LogTemplateCharacter, Error, TEXT("'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
-	}
-}
-
-void APortfolioProjectCharacter::OnHealthChange(UHealthComponent* HealthCom, float Health, float DamageAmount,
-	const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser)
-{
-	if (Health <= 0.0f)
-	{
-		Destroy();
-	}
-	UE_LOG(LogTemp, Warning, TEXT("The Player's Current Health is: %f"), Health);
-}
-
-void APortfolioProjectCharacter::DamagePlayer()
-{
-	
-}
-
-void APortfolioProjectCharacter::Move(const FInputActionValue& Value)
+void APortfolioProjectCharacter::Move(const FInputActionValue& InputActionValue)
 {
 	// input is a Vector2D
-	FVector2D MovementVector = Value.Get<FVector2D>();
+	FVector2D MovementVector = InputActionValue.Get<FVector2D>();
 
 	if (Controller != nullptr)
 	{
@@ -182,11 +184,10 @@ void APortfolioProjectCharacter::Move(const FInputActionValue& Value)
 		AddMovementInput(RightDirection, MovementVector.X);
 	}
 }
-
-void APortfolioProjectCharacter::Look(const FInputActionValue& Value)
+void APortfolioProjectCharacter::Look(const FInputActionValue& InputActionValue)
 {
 	// input is a Vector2D
-	FVector2D LookAxisVector = Value.Get<FVector2D>();
+	FVector2D LookAxisVector = InputActionValue.Get<FVector2D>();
 
 	if (Controller != nullptr)
 	{
@@ -203,13 +204,34 @@ void APortfolioProjectCharacter::StartBlock(const FInputActionValue& Value)
 {
 	
 }
-
 void APortfolioProjectCharacter::StartLightAttack(const FInputActionValue& Value)
 {
 	if(isAttacking) return;
 	UAnimMontage* Montages[3] = {SwordAttack,SwordAttack2,SwordAttack3};
 	ComboCount = (ComboCount + 1) % 3;
 	StartAttack(Montages[ComboCount]);
+}
+
+void APortfolioProjectCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+	UMyEnhancedInputComponent* MyEnhancedInputComponent = Cast<UMyEnhancedInputComponent>(PlayerInputComponent);
+	check(MyEnhancedInputComponent);
+	const FMyGameplayTags& GameplayTags = FMyGameplayTags::Get();
+
+	MyEnhancedInputComponent->BindActionByTag(InputConfig,GameplayTags.InputTag_LightAttack,ETriggerEvent::Triggered,
+		this,&APortfolioProjectCharacter::StartLightAttack);
+
+	MyEnhancedInputComponent->BindActionByTag(InputConfig,GameplayTags.InputTag_Move,ETriggerEvent::Triggered,
+		this,&APortfolioProjectCharacter::Move);
+
+	MyEnhancedInputComponent->BindActionByTag(InputConfig,GameplayTags.InputTag_Look_Mouse,ETriggerEvent::Triggered,
+		this,&APortfolioProjectCharacter::Look);
+	
+	MyEnhancedInputComponent->BindActionByTag(InputConfig,GameplayTags.InputTag_Jump,ETriggerEvent::Triggered,
+		this,&APortfolioProjectCharacter::Jump);
+	
+	
 }
 
 

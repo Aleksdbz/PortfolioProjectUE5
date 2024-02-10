@@ -16,7 +16,7 @@ AAICharacter::AAICharacter()
 
 }
 
-// Called when the game starts or when spawned
+
 void AAICharacter::BeginPlay()
 {
 	Super::BeginPlay();

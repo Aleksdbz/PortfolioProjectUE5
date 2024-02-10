@@ -5,23 +5,28 @@
 #include "CoreMinimal.h"
 #include "InputActionValue.h"
 #include "GameFramework/Character.h"
+#include "AbilitySystemInterface.h"
 #include "Logging/LogMacros.h"
 #include "UE5Coro.h"
 #include "PortfolioProjectCharacter.generated.h"
 
+class UInputConfig;
+struct FGameplayTag;
+class UMyEnhancedInputComponent;
 class ASword;
 class USpringArmComponent;
 class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
 class ABow;
+
 class AArrow;
 struct FInputActionValue;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
 UCLASS(config=Game)
-class APortfolioProjectCharacter : public ACharacter
+class APortfolioProjectCharacter : public ACharacter, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
@@ -55,7 +60,6 @@ class APortfolioProjectCharacter : public ACharacter
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* LightAttack;
 
-	
 
 
 public:
@@ -68,49 +72,55 @@ public:
 	ASword* Sword;
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<ASword> SwordClass;
-	UPROPERTY(EditDefaultsOnly,BlueprintReadWrite)
-	class UHealthComponent* HealthComponent;
-	UFUNCTION()
-	void OnHealthChange(UHealthComponent* HealthCom,float Health,float DamageAmount,
-		const class UDamageType* DamageType,class AController* InstigatedBy, AActor* DamageCauser);
-	
-	UFUNCTION()
-	void DamagePlayer(); //it will be called to dmg player
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,Category="Weapon")
-	TSubclassOf<UDamageType> DamageType;
-	
 
-	
+	UPROPERTY(EditAnywhere,BlueprintReadOnly)
+	UAbilitySystemComponent* AbilitySystemComponent;
 
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override
+	{
+		return AbilitySystemComponent;
+	}
+
+	UPROPERTY()
+	class UMyAttributeSet* AttributesSet;
+	
+	UPROPERTY(BlueprintReadOnly,EditDefaultsOnly, Category ="Abilities")
+	TArray<TSubclassOf< class UMyGameplayAbility>> GameplayAbility;
+	
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly) //Default Attributes for Player 
+	TSubclassOf<class UGameplayEffect> DefaultGameplayEffect;
+		
+	virtual void InitializeAttributes();
+
+	virtual void GrandAbilities();
+
+	void MappingContext();
 protected:
 
 	/** Called for movement input */
-	void Move(const FInputActionValue& Value);
-
+	void Move(const FInputActionValue& InputActionValue);
 	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
-	
-
-	void StartBlock(const FInputActionValue& Value);		
-	void StopBlock(const FInputActionValue& Value);
-	void StartLightAttack(const FInputActionValue& Value);
+	void InputJump(const FInputActionValue& InputActionValue);
+	void StartBlock(const FInputActionValue& InputActionValue);		
+	void StopBlock(const FInputActionValue& InputActionValue);
+	void StartLightAttack(const FInputActionValue& InputActionValue);
 
 	
 	// APawn interface
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent);
 	
 	// To add mapping context
 	virtual void BeginPlay() override;
 
 	virtual void Tick(float DeltaSeconds) override;
-	
 
 public:
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
-
+	
 
 private:
 	void EquipSword();
@@ -119,6 +129,11 @@ private:
 	bool isAttacking;
 
 	UAnimInstance* GetAnimInstance() const;
+
+	UPROPERTY(EditDefaultsOnly,Category="Input")
+	UInputConfig* InputConfig;
+
+
 	
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "PlayerCombatAnimation", meta =(AllowPrivateAccess = "true"))
 	UAnimMontage* SwordAttack;
@@ -126,9 +141,10 @@ private:
 	UAnimMontage* SwordAttack2;
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "PlayerCombatAnimation", meta =(AllowPrivateAccess = "true"))
     UAnimMontage* SwordAttack3;
-	
-	
 
 	
+	
 };
+
+
 

@@ -1,6 +1,5 @@
-
-#include "AICharacter.h"
 #include "BTService_IsTargetInRange.h"
+#include "AICharacter.h"
 #include "NPC_AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Kismet/GameplayStatics.h"

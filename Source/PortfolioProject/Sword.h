@@ -15,9 +15,11 @@ public:
 	// Sets default values for this actor's properties
 	ASword();
 	UPROPERTY(EditAnywhere,BlueprintReadOnly)
-	USkeletalMeshComponent* SkeletalMesh;
+	UStaticMeshComponent* StaticMeshComp;
 	UPROPERTY(EditAnywhere,BlueprintReadOnly)
-	class UCapsuleComponent* CapsuleColider;
+	class UBoxComponent* BoxCollider;
+
+	
 
 protected:
 	// Called when the game starts or when spawned
@@ -26,7 +28,15 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
+	USceneComponent* BoxTraceStart;
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
+	USceneComponent* BoxTraceEnd;
 
-	
+	UFUNCTION()
+	void OnBoxHit(UPrimitiveComponent* OverlappedComponent,
+	AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);
+private:
+
 
 };
