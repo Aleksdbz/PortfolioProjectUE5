@@ -22,7 +22,6 @@ void AProjectPlayerState::OnMaxHealthChange(const FOnAttributeChangeData& Data) 
 
 }
 
-
 void AProjectPlayerState::BeginPlay()
 {
 	Super::BeginPlay();
@@ -39,7 +38,6 @@ void AProjectPlayerState::BeginPlay()
 	ASC->GetGameplayAttributeValueChangeDelegate(PlayerMaxHealth).AddUObject(this,&AProjectPlayerState::OnMaxHealthChange);
 	
 }
-
 
 UAbilitySystemComponent* AProjectPlayerState::GetAbilitySystemComponent() const
 {

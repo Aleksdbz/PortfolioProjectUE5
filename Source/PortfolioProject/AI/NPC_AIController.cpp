@@ -5,11 +5,14 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Sight.h"
+#include "PortfolioProject/Player/MyAttributeSet.h"
 
 ANPC_AIController::ANPC_AIController(FObjectInitializer const& ObjectInitializer)
 {
 	SetUpPerceptionSystem();
+
 }
+
 
 void ANPC_AIController::OnPossess(APawn* InPawn)
 {
@@ -27,6 +30,8 @@ void ANPC_AIController::OnPossess(APawn* InPawn)
 	}
 	
 }
+
+
 
 void ANPC_AIController::SetUpPerceptionSystem()
 {

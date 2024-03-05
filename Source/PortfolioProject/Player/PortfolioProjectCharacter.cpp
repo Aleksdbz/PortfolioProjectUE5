@@ -83,6 +83,8 @@ void APortfolioProjectCharacter::BeginPlay()
 	EquipSword();
 	MappingContext();
 	GrandAbilities();
+
+	
 	
 		
 }

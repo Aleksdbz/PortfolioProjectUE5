@@ -12,8 +12,8 @@ class APortfolioProjectCharacter;
 struct FOnAttributeChangeData;
 class UMyAttributeSet;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHealthChangeSignature, float, NewHealth);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMaxHealthChangeSignature, float, NewMaxHealth);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAIHealthChangeSignature, float, NewHealth);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAIMaxHealthChangeSignature, float, NewMaxHealth);
 
 UCLASS()
 class PORTFOLIOPROJECT_API AProjectPlayerState : public APlayerState,public IAbilitySystemInterface
@@ -33,9 +33,9 @@ public:
 	TObjectPtr<UMyAttributeSet> Attribute;
 	
     UPROPERTY(BlueprintAssignable)
-	FOnHealthChangeSignature HealthChange;
+	FOnAIHealthChangeSignature HealthChange;
 	UPROPERTY(BlueprintAssignable)
-	FOnHealthChangeSignature MaxHealthChange;
+	FOnAIMaxHealthChangeSignature MaxHealthChange;
 	
 	
 	

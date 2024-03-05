@@ -22,14 +22,12 @@ public:
 	
 	UPROPERTY(BlueprintReadWrite, Category="Custom UI", meta=(BindWidget))
 	class UProgressBar* ProgressBarWidget;
-
+	
 	UPROPERTY(BlueprintReadWrite, Category="Custom UI", meta=(BindWidget))
 	class UTextBlock* HealthTextWidget;
 
-	UFUNCTION(BlueprintNativeEvent,BlueprintCallable)
-	void SetCurrentHealth(float UIHealth);
-
-
 	
+	
+	void SetCurrentHealth_Implementation(float UIHealth);
 };
  

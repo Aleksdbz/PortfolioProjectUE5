@@ -2,11 +2,14 @@
 
 #include "AICharacter.h"
 #include "AbilitySystemComponent.h"
+#include "NPC_AIController.h"
 #include "Components/WidgetComponent.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Perception/AISense_Sight.h"
 #include "PortfolioProject/Items/Sword.h"
 #include "PortfolioProject/Player/MyAttributeSet.h"
+#include "PortfolioProject/Player/MyGameplayAbility.h"
+#include "PortfolioProject/UI/AIUILogic.h"
 
 // Sets default values
 AAICharacter::AAICharacter()
@@ -14,14 +17,13 @@ AAICharacter::AAICharacter()
 	PrimaryActorTick.bCanEverTick = false;
 	SetUpStimulusSource();
 
-	AIAbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>("AIAbilitySystemComp");
-	AIAttribute = CreateDefaultSubobject<UMyAttributeSet>("AIAttributes");
 	AIHealthBar = CreateDefaultSubobject<UWidgetComponent>("AIHealthBar");
 	AIHealthBar->SetupAttachment(GetRootComponent());
-	
+
+	AIAbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>("AIAbilitySystemComp");
+	AIAttribute = CreateDefaultSubobject<UMyAttributeSet>("AIAttributes");
 
 }
-
 
 void AAICharacter::BeginPlay()
 {
@@ -29,13 +31,21 @@ void AAICharacter::BeginPlay()
 		Sword = GetWorld()->SpawnActor<ASword>(SwordClass);
 		Sword->AttachToComponent(GetMesh(),FAttachmentTransformRules::KeepRelativeTransform,TEXT("hand_lSocket"));
 		Sword->SetOwner(this);
-
-	AIAttribute->SetHealth(2000);
 	AIAttribute->SetMaxHealth(2000);
+	AIAttribute->SetHealth(2000);
+	
+	AIHealthChange.Broadcast(AIAttribute->GetHealth());
+	AIMaxHealthChange.Broadcast(AIAttribute->GetMaxHealth());
+	
+	auto const AiHealth = AIAttribute->GetHealthAttribute();
+	auto const GetAIMaxHp  = AIAttribute->GetMaxHealthAttribute();
+	
 
-	
-	
+	AIAbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AiHealth).AddUObject(this,&AAICharacter::OnAIHealthChange);
+	AIAbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(GetAIMaxHp).AddUObject(this,&AAICharacter::OnAIMaxHealthChange);
+
 	AIAbilitySystemComponent->InitAbilityActorInfo(this,this);
+	
 }
 
 // Called every frame
@@ -60,6 +70,38 @@ void AAICharacter::SetUpStimulusSource()
 		StimulusSource->RegisterForSense(TSubclassOf<UAISense_Sight>());
 		StimulusSource->RegisterWithPerceptionSystem();
 	}
+}
+
+float AAICharacter::GetAiMaxHp() const
+{
+	return AIAttribute->GetMaxHealth();
+}
+
+
+void AAICharacter::GrantAbilities()
+{
+	for(TSubclassOf<UGameplayAbility> AIAbilities : NPCAbilities)
+	{
+		FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(AIAbilities, 1);
+			
+			AIAbilitySystemComponent->GiveAbility(AbilitySpec);
+		
+	}
+	
+
+}
+
+void AAICharacter::OnAIMaxHealthChange(const FOnAttributeChangeData& Data) const
+{
+	
+	AIMaxHealthChange.Broadcast(Data.NewValue);
+
+}
+
+void AAICharacter::OnAIHealthChange(const FOnAttributeChangeData& Data) const
+{
+	AIHealthChange.Broadcast(Data.NewValue);
+	
 }
 
 UBehaviorTree* AAICharacter::GetBehaviorTree()

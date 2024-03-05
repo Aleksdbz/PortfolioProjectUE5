@@ -1,13 +1,11 @@
 
 #include "Sword.h"
 #include "Components/BoxComponent.h"
-#include "Logging/StructuredLog.h"
 #include "Kismet/GameplayStatics.h"
 
 // Sets default values
 ASword::ASword()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 	StaticMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
 	SetRootComponent(StaticMeshComp);
@@ -43,7 +41,7 @@ void ASword::Tick(float DeltaTime)
 }
 
 void ASword::OnBoxHit(UPrimitiveComponent* OverlappedComponent,
-	AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult)
+	AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	FVector Start = BoxTraceStart->GetComponentLocation();
 	FVector End = BoxTraceEnd->GetComponentLocation();
@@ -63,6 +61,7 @@ void ASword::OnBoxHit(UPrimitiveComponent* OverlappedComponent,
 		EDrawDebugTrace::ForDuration,
 		HitRes,
 		true);
+	
 
 	if(HitRes.bBlockingHit)
 	{

@@ -94,7 +94,7 @@ public:
 	
 	//void InitializeAttributes();
 
-	virtual void GrandAbilities();
+	 void GrandAbilities();
 
 	void MappingContext();
 

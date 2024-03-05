@@ -11,9 +11,16 @@
 #include "AICharacter.generated.h"
 
 
+class UAIUILogic;
+struct FGameplayAttribute;
+class ASword;
 class UWidgetComponent;
 class UMyAttributeSet;
-class ASword;
+struct FOnAttributeChangeData;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHealthChangeSignature, float, AINewHealth);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMaxHealthChangeSignature, float, AINewMaxHealth);
+
 
 UCLASS()
 class PORTFOLIOPROJECT_API AAICharacter : public ACharacter, public ICombatInterface, public IAbilitySystemInterface
@@ -29,7 +36,21 @@ public:
 	ASword* Sword;
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<ASword> SwordClass;
+	
+	UPROPERTY()
+	UAIUILogic* HealthWidget;
 
+	UPROPERTY()
+	TSubclassOf<UAIUILogic> HealthWidgetClass;
+
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
+	UWidgetComponent* AIHealthBar;
+
+	UPROPERTY(BlueprintReadOnly,EditDefaultsOnly, Category ="AI||Abilities")
+	TArray<TSubclassOf< class UMyGameplayAbility>> NPCAbilities;
+	
+	//void GrantAbilities();
+	
 	UPROPERTY(BlueprintReadOnly,EditAnywhere)
 	UAbilitySystemComponent* AIAbilitySystemComponent;
 	
@@ -37,15 +58,21 @@ public:
 	{
 		return AIAbilitySystemComponent;
 	}
-
+	
 	UPROPERTY()
 	TObjectPtr<UMyAttributeSet> AIAttribute;
-	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
-	TObjectPtr<UWidgetComponent>  AIHealthBar;
 
+	UPROPERTY(BlueprintAssignable)
+	FOnHealthChangeSignature AIHealthChange;
+	UPROPERTY(BlueprintAssignable)
+	FOnMaxHealthChangeSignature AIMaxHealthChange;
+
+	void OnAIMaxHealthChange(const FOnAttributeChangeData& Data) const;
+	void OnAIHealthChange(const FOnAttributeChangeData& Data) const;
+
+	void GrantAbilities();
 
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI",meta=(AllowPrivateAccess = "true"))
@@ -61,6 +88,8 @@ public:
 	UAnimMontage* GetMontage() const;
 
 	virtual int MeleeAttack_Implementation() override;
+
+	
 	
 private:
 	UPROPERTY()
@@ -71,5 +100,14 @@ private:
 	
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "Ai", meta =(AllowPrivateAccess = "true"))
 	UAnimMontage* Montage;
+
+	UFUNCTION()
+	float GetAiMaxHp()const;
+
+	
+	
+
+
+	
 };
 
